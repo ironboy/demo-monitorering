@@ -52,6 +52,18 @@ Appen samlar in följande:
 - **acl_denials_total** -- antal nekade åtkomstförsök
 - Dessutom samlas Node.js-standardmått in automatiskt: minnesanvändning, CPU-tid, event loop-latens med mera.
 
+### Var i koden ligger monitoreringen?
+
+All monitorering bygger på npm-paketet `prom-client`. Metric-definitionerna är samlade på ett ställe och importeras sedan i de filer där de behövs:
+
+- **`backend/helpers/metrics.js`** -- här definieras alla metrics (counters, histograms, gauge) och Prometheus-registryt. Det här är navet som övriga filer importerar från.
+- **`backend/classes/Server.js`** -- Express-middleware som mäter all HTTP-trafik: antal förfrågningar, svarstider och pågående requests. Här ligger även `/metrics`-endpointen som Prometheus hämtar data från.
+- **`backend/classes/DBQueryMakerSQLite.js`** -- mäter hur lång tid varje databasfråga tar, uppdelat per SQL-operation (SELECT, INSERT, etc.) och tabell.
+- **`backend/classes/LoginHandlerSQL.js`** -- räknar inloggningsförsök, med label för om det lyckades eller inte.
+- **`backend/classes/Acl.js`** -- räknar antal nekade åtkomstförsök (ACL denials).
+
+Varje instrumentering är bara 2-3 rader kod. Mönstret är alltid: importera rätt metric från `metrics.js`, sedan anropa `.inc()` (counter) eller `.startTimer()` (histogram) på rätt ställe.
+
 ## Steg 2: Installera Docker Desktop
 
 Gå till **https://www.docker.com/products/docker-desktop/** och ladda ner installationsprogrammet för ditt operativsystem. Kör den nedladdade filen och följ installationsguiden.
