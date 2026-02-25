@@ -99,7 +99,9 @@ Adressen `host.docker.internal` är en speciell DNS-adress som Docker tillhandah
 
 ## Steg 4: Verifiera att Prometheus samlar in data
 
-Öppna **http://localhost:9090** i webbläsaren. I sökfältet (query-fältet) högst upp, skriv:
+Öppna **http://localhost:9090** i webbläsaren. Prometheus har ett inbyggt webbgränssnitt där du kan köra queries och se grafer direkt.
+
+I sökfältet (query-fältet) högst upp, skriv:
 
 ```
 http_requests_total
@@ -107,7 +109,23 @@ http_requests_total
 
 Klicka på **Execute**. Om allt fungerar bör du se mätvärden med labels som `method`, `route` och `status_code`. Klicka på fliken **Graph** för att se en enkel graf.
 
-Om du inte ser data, kontrollera under **Status > Targets** att targeten visar `UP`. Om den visar `DOWN`, kontrollera att appen verkligen körs på port 5001.
+Testa fler queries i Prometheus-gränssnittet:
+
+- `rate(http_requests_total[1m])` -- antal förfrågningar per sekund den senaste minuten.
+- `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[1m]))` -- 95:e percentilen av svarstider.
+- `process_resident_memory_bytes` -- appens minnesanvändning.
+
+Prometheus webbgränssnitt är bra för att snabbt testa queries, men ganska grundläggande visuellt. Det är därför vi även kör Grafana, som ger snyggare dashboards med flera paneler, färger och automatisk uppdatering.
+
+### Prometheus HTTP API
+
+Prometheus exponerar även ett HTTP API som returnerar JSON. Det är detta API som Grafana använder bakom kulisserna för att hämta data. Du kan testa det direkt i webbläsaren:
+
+- **Instant query:** http://localhost:9090/api/v1/query?query=http_requests_total
+- **Lista alla metrics:** http://localhost:9090/api/v1/label/__name__/values
+- **Scrape-targets:** http://localhost:9090/api/v1/targets
+
+Under **Status > Targets** i webbgränssnittet kan du kontrollera att targeten visar `UP`. Om den visar `DOWN`, kontrollera att appen verkligen körs på port 5001.
 
 ## Steg 5: Logga in i Grafana och öppna dashboarden
 
