@@ -2,6 +2,8 @@
 
 Den här guiden visar hur du sätter upp och kör en e-handelsapp med inbyggd monitorering. Appen exponerar mätvärden (metrics) i Prometheus-format, som sedan samlas in av Prometheus och visualiseras i Grafana via Docker.
 
+Läs mer allmänt om Prometheus-monitorering här: https://blog.risingstack.com/node-js-performance-monitoring-with-prometheus
+
 ## Förutsättningar
 
 - Node.js (version 18 eller senare)
