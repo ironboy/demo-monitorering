@@ -43,13 +43,14 @@ export default class Server {
     });
     // Metrics middleware — track request count, duration and active requests
     this.app.use((req, res, next) => {
-      if (req.path === '/metrics') return next();
+      if (req.path === '/metrics' || req.path.startsWith('/.well-known/')) {
+        return next();
+      }
       activeRequests.inc();
       const end = httpRequestDuration.startTimer();
       res.on('finish', () => {
         activeRequests.dec();
-        const route = req.route?.path
-          || this.normalizeRoute(req.path);
+        const route = this.metricsRoute(req);
         const labels = {
           method: req.method,
           route,
@@ -73,8 +74,12 @@ export default class Server {
     !app && this.addStaticFolder();
   }
 
-  // Group static file paths to avoid high-cardinality metric labels
-  normalizeRoute(path) {
+  // Determine the route label for metrics
+  metricsRoute(req) {
+    const path = req.path;
+    // API routes: use the actual path (e.g. /api/products, /api/cart)
+    if (path.startsWith('/api/')) return path;
+    // Group static files to avoid high-cardinality labels
     if (path.match(/\.(js|css|map)$/)) return '/static/scripts';
     if (path.match(/\.(png|jpg|gif|svg|ico)$/)) return '/static/images';
     if (path.match(/\.(woff2?|ttf|eot)$/)) return '/static/fonts';
